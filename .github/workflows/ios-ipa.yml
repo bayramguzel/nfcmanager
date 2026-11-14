@@ -1,0 +1,80 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ios-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ipa:
+    name: Unsigned IPA
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.6
+          cache: true
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Test
+        run: flutter test
+
+      - name: Build iOS release (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          APP_PATH="build/ios/iphoneos/Runner.app"
+          test -d "$APP_PATH"
+          rm -rf build/unsigned_ipa
+          mkdir -p build/unsigned_ipa/Payload
+          cp -R "$APP_PATH" build/unsigned_ipa/Payload/
+          cd build/unsigned_ipa
+          zip -qry "NFCManager-unsigned-${GITHUB_RUN_NUMBER}.ipa" Payload
+          rm -rf Payload
+          shasum -a 256 ./*.ipa | tee checksums.txt
+          ls -lh ./*.ipa
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfcmanager-unsigned-ipa
+          path: |
+            build/unsigned_ipa/*.ipa
+            build/unsigned_ipa/checksums.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Summary
+        run: |
+          {
+            echo "### Unsigned IPA ready"
+            echo ""
+            echo "The .ipa in this run is **not code signed**, so iOS will not install it directly."
+            echo ""
+            echo "Install it on a device with a signing tool (Sideloadly, AltStore, SideStore or Xcode):"
+            echo ""
+            echo "1. Download the artifact \`nfcmanager-unsigned-ipa\` from the run page."
+            echo "2. Open the .ipa in Sideloadly with your Apple ID (free accounts work, the app expires after 7 days)."
+            echo "3. On the iPhone: Settings > General > VPN & Device Management > trust your developer profile."
+            echo "4. NFC needs a physical iPhone (7 or newer); the simulator has no NFC reader."
+          } >> "$GITHUB_STEP_SUMMARY"

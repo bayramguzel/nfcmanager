@@ -1,0 +1,51 @@
+
+-[x] Almancada Einstellungen sigmiyor tab menü icerisinde onu Eins. Yapalim.
+     -> Yeni "settingsTab" çeviri anahtarı eklendi. Almanca: "Eins.",
+        Portekizce: "Config." (aynı taşma sorunu vardı), diğerleri aynı.
+
+-[x] tab menü üzerinde assets/banner.jpg dosyasini gösterelim unity banner reklamlari olmadigi süre boyunca, reklam gelince banneri gizleyelim.
+     -> lib/ui/widgets/app_banner_ad.dart oluşturuldu (ortak widget).
+        Unity banner yokken assets/banner.jpg, reklam geldiğinde (onLoad)
+        görsel gizlenip reklam gösterilir; reklamsız modda şerit tamamen gizli.
+        assets/banner.jpg pubspec.yaml'a eklendi.
+
+-[x] Write sayfasinda Quick Templates altindaki kartlarda kac icerik oldugu yaziyor onlarin yanina > isaretide ekleyelimki kullanici tiklayinca yeni liste gelcegini bilsin.
+     -> Şablon rozetine "> " işareti eklendi; açılınca aşağı döner (açılır kapanır).
+
+-[x] Olabildigince fazla nfc protokollerini hem yazmada hem okumada destekleyelim.
+     OKUMA: URI (http/tel/mailto/sms/geo...), vCard, vCalendar, JSON, HTML,
+            Wi-Fi WPS/WSC (SSID/şifre/güvenlik gerçekten çözümleniyor),
+            Bluetooth OOB (MAC), Smart Poster (içindeki NDEF mesajı çözülür),
+            Handover, Android AAR (paket adı okunuyor), ikili veriler hex/base64.
+            Etiket tespiti: NFC-A/B/F/V, ISO-DEP, MIFARE Classic/Ultralight/DESFire,
+            NTAG, ST25, NFC Barcode, NDEF Formatable.
+     YAZMA: Smart Poster kaydı (URI + içerik tipi, gerçek NDEF mesajı),
+            URI şeması sıkıştırma tablosu 30 öneke çıkarıldı
+            (http/https/tel/mailto/ftp/ftps/sftp/smb/dav/news/telnet/imap/rtsp/urn/sip/sips/tftp/file/bt...),
+            tüm NDEF kayıt tipleri (Text/URI/MIME/External/SmartPoster) düzgün yazılıyor.
+
+-[x] History icerisinde daha önceki yapilan islemlerin oldugu kartlarida pastel renklerde yapalim ve her 5 kart arasina bir banner reklami ekleyelim
+     -> RecordCard'a `pastelBackground` seçeneği eklendi; geçmişteki kartlar
+        kayıt tipine göre pastel zeminle gösteriliyor. Her 5 kartın altına
+        AppBannerAd (Unity banner / banner.jpg) yerleştirildi.
+
+-[x] ayarlar sayfasini da bölümlere göre kolay görünür sekilde pastel renklerle renklendirelim.
+     -> 7 bölüm pastel kutulara ayrıldı: Dil (indigo), NFC (teal),
+        Tercihler (mor), Görünüm (turuncu), Hakkında (mavi),
+        Sosyal Medya (pembe), Destek (amber).
+
+-[x] ayarlardaki privacy tiklayinca 41software.com/privacy sayfasi acilsin.
+     -> https://www.41software.com/privacy adresine çekildi.
+
+-[x] ayarlardaki social media bölümündeki linkler acilmiyor, tüm linkler sorunsuz acilsin.
+     -> Kök neden bulundu: AndroidManifest.xml'de <queries> tanımlı değildi,
+        Android 11+ üzerinde canLaunchUrl hep "false" dönüyordu.
+        https/http/mailto/market + com.android.vending eklendi; ayrıca
+        canLaunchUrl kontrolü kaldırılıp doğrudan launchUrl (+platformDefault
+        yedeği) kullanılıyor.
+
+-[x] uygulama 2-3 kez kullanildiktan sonra oy vermeye tesvik edelim ki tek tikla oy ve yorum verebilsinler Google Playde. Eger birkez tiklamissa tekrar göstermeyelim.
+     -> 3. açılışta istem gösterilir. "Şimdi Oy Ver"e basıldığında artık
+        gösterilmez; kapatılırsa 1-2 gün sonra hatırlatılır (tercih edilen davranış).
+        market://details?...&showAllReviews=true derin bağlantısı eklendi,
+        böylece Play Store uygulaması tek tıkla açılır (oy + yorum).

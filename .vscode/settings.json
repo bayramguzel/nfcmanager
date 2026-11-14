@@ -1,0 +1,13 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.gradle.enabled": false,
+    "java.autobuild.enabled": false,
+    "java.import.gradle.java.home": null,
+    "java.import.gradle.user.home": null,
+    "java.import.gradle.version": null,
+    "dart.debugExternalPackageLibraries": true,
+    "editor.formatOnSave": true,
+    "[dart]": {
+        "editor.formatOnSave": true
+    }
+}

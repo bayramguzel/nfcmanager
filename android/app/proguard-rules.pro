@@ -1,0 +1,2 @@
+-keep class android.view.contentcapture.** { *; }
+-dontwarn android.view.contentcapture.**
