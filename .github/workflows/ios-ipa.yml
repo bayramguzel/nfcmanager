@@ -40,31 +40,23 @@ jobs:
       - name: Test
         run: flutter test
 
-      - name: Use CocoaPods for plugins
-        run: flutter config --no-enable-swift-package-manager
+      - name: Enable Swift Package Manager
+        run: flutter config --enable-swift-package-manager
+
+      - name: Migrate iOS project to Swift Package Manager
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          if [ -f Podfile ]; then
+            pod deintegrate
+          fi
+          rm -rf Podfile Podfile.lock Pods
 
       - name: Build iOS release (no codesign)
         run: |
           set -o pipefail
           mkdir -p build/ci
           flutter build ios --release --no-codesign 2>&1 | tee build/ci/ios-build.log
-
-      - name: Publish build log
-        if: always()
-        run: |
-          set -euo pipefail
-          rm -rf ci-logs
-          mkdir -p ci-logs
-          cp build/ci/ios-build.log ci-logs/ios-build.log 2>/dev/null || echo "no build log produced" > ci-logs/ios-build.log
-          cd ci-logs
-          git init -q -b ci-logs
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add ios-build.log
-          git commit -qm "ci build log run ${GITHUB_RUN_NUMBER} attempt ${GITHUB_RUN_ATTEMPT}"
-          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-logs:ci-logs
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package unsigned IPA
         run: |
@@ -90,10 +82,30 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Publish CI artefacts to ci-logs branch
+        if: always()
+        run: |
+          set -euo pipefail
+          rm -rf ci-out
+          mkdir -p ci-out
+          cp build/ci/ios-build.log ci-out/ios-build.log 2>/dev/null || echo "no build log" > ci-out/ios-build.log
+          cp ios/Runner.xcodeproj/project.pbxproj ci-out/project.pbxproj
+          cp build/unsigned_ipa/*.ipa ci-out/ 2>/dev/null || true
+          cd ci-out
+          git init -q -b ci-logs
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add .
+          git commit -qm "ci run ${GITHUB_RUN_NUMBER} attempt ${GITHUB_RUN_ATTEMPT}"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-logs:ci-logs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Summary
+        if: always()
         run: |
           {
-            echo "### Unsigned IPA ready"
+            echo "### iOS build result"
             echo ""
             echo "The .ipa in this run is **not code signed**, so iOS will not install it directly."
             echo ""
