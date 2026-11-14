@@ -63,7 +63,8 @@ Before the first iOS release:
    placements differ from the Android ones.
 4. In App Store Connect, declare the advertising identifier usage and complete
    the privacy nutrition labels (NFC tag contents never leave the device).
-5. iOS builds need macOS with Xcode and CocoaPods (`flutter build ipa`).
+5. iOS device builds need macOS with Xcode 26; on Windows/Linux use the
+   GitHub Actions workflow, which also produces the unsigned IPA.
 
 ### iOS-native UI and interactions
 
