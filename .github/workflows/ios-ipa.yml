@@ -40,6 +40,9 @@ jobs:
       - name: Test
         run: flutter test
 
+      - name: Use CocoaPods for plugins
+        run: flutter config --no-enable-swift-package-manager
+
       - name: Build iOS release (no codesign)
         run: |
           set -o pipefail
