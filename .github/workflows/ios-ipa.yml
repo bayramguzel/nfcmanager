@@ -9,6 +9,9 @@ concurrency:
   group: ios-ipa-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   ipa:
     name: Unsigned IPA
@@ -38,7 +41,27 @@ jobs:
         run: flutter test
 
       - name: Build iOS release (no codesign)
-        run: flutter build ios --release --no-codesign
+        run: |
+          set -o pipefail
+          mkdir -p build/ci
+          flutter build ios --release --no-codesign 2>&1 | tee build/ci/ios-build.log
+
+      - name: Publish build log
+        if: always()
+        run: |
+          set -euo pipefail
+          rm -rf ci-logs
+          mkdir -p ci-logs
+          cp build/ci/ios-build.log ci-logs/ios-build.log 2>/dev/null || echo "no build log produced" > ci-logs/ios-build.log
+          cd ci-logs
+          git init -q -b ci-logs
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add ios-build.log
+          git commit -qm "ci build log run ${GITHUB_RUN_NUMBER} attempt ${GITHUB_RUN_ATTEMPT}"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" ci-logs:ci-logs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package unsigned IPA
         run: |
